@@ -96,11 +96,11 @@ def generador_poisson(media, n):
         p = 1
         x = -1
         a = np.exp(-media)
-        u = np.random.random_integers(0,1)
+        u = np.random.random()
         p = p * u
         x = x + 1
         while p >= a:
-            u = np.random.random_integers(0,1)
+            u = np.random.random()
             p = p * u
             x = x + 1
         valores.append(x)

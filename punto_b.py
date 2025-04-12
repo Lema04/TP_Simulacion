@@ -41,6 +41,33 @@ def graficador(data, intervalos):
     plt.tight_layout()
     plt.show()
 
+def agrupar_intervalos(f_obs, f_esp, min_freq=5):
+    obs_agrupada = []
+    esp_agrupada = []
+    acum_obs = 0
+    acum_esp = 0
+
+    for fo, fe in zip(f_obs, f_esp):
+        acum_obs += fo
+        acum_esp += fe
+        if acum_esp >= min_freq:
+            obs_agrupada.append(acum_obs)
+            esp_agrupada.append(acum_esp)
+            acum_obs = 0
+            acum_esp = 0
+
+    # Si sobró algo al final, agrégalo al último grupo
+    if acum_esp > 0:
+        if obs_agrupada:
+            obs_agrupada[-1] += acum_obs
+            esp_agrupada[-1] += acum_esp
+        else:
+            obs_agrupada.append(acum_obs)
+            esp_agrupada.append(acum_esp)
+
+    return np.array(obs_agrupada), np.array(esp_agrupada)
+
+
 def dist_teorica():
     dist = validar_dist_teo()
     if dist == "normal":
@@ -82,11 +109,14 @@ def test_chi_cuadrado(datos, alpha):
         fe.append(prob * n)
     fe = np.array(fe)
 
+    # Agrupar intervalos si es necesario
+    frec_obs, fe = agrupar_intervalos(frec_obs, fe)
+
     # Estadístico chi-cuadrado
     chi2_stat = np.sum((frec_obs - fe) ** 2 / fe)
 
     # Grados de libertad
-    gl = k - 1
+    gl = len(frec_obs) - 1
 
     # Valor crítico y p-value
     valor_critico = stats.chi2.ppf(1 - alpha, gl)

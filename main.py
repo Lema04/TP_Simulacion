@@ -72,11 +72,11 @@ def main():
         "Poisson": None
     }
     opc = -1
-    sub_opc = -1
     while opc != 0:
         menu()
         opc = int(input("Seleccione una opción: "))
         if opc == 1:
+            sub_opc = -1
             while sub_opc != 5:
                 menu_a()
                 sub_opc = int(input("Seleccione una opción: "))
