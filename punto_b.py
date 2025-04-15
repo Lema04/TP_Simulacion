@@ -4,10 +4,10 @@ import numpy as np
 import scipy.stats as stats
 
 def validar_dist_teo():
-    dist = input("¿Qué distribución teórica desea utilizar? (normal, uniforme, exponencial, poisson): ").strip().lower()
+    dist = input("\n¿Qué distribución teórica desea utilizar? (normal, uniforme, exponencial, poisson): ").strip().lower()
     while dist not in ["normal", "uniforme", "exponencial", "poisson"]:
         print("Error!! Distribución no válida, por favor elija entre normal, uniforme, exponencial o poisson")
-        dist = input("¿Qué distribución teórica desea utilizar? (normal, uniforme, exponencial, poisson): ").strip().lower()
+        dist = input("\n¿Qué distribución teórica desea utilizar? (normal, uniforme, exponencial, poisson): ").strip().lower()
     return dist
 
 def graficador(data, intervalos):
@@ -56,7 +56,6 @@ def agrupar_intervalos(f_obs, f_esp, min_freq=5):
             acum_obs = 0
             acum_esp = 0
 
-    # Si sobró algo al final, agrégalo al último grupo
     if acum_esp > 0:
         if obs_agrupada:
             obs_agrupada[-1] += acum_obs
@@ -67,22 +66,21 @@ def agrupar_intervalos(f_obs, f_esp, min_freq=5):
 
     return np.array(obs_agrupada), np.array(esp_agrupada)
 
-
 def dist_teorica():
     dist = validar_dist_teo()
     if dist == "normal":
-        media = float(input("Ingrese la media: "))
-        desviacion = float(input("Ingrese la desviación estándar: "))
+        media = float(input("\nIngrese la media: "))
+        desviacion = float(input("\nIngrese la desviación estándar: "))
         return stats.norm(media, desviacion)
     if dist == "uniforme":
-        a = float(input("Ingrese el límite inferior: "))
-        b = float(input("Ingrese el límite superior: "))
+        a = float(input("\nIngrese el límite inferior: "))
+        b = float(input("\nIngrese el límite superior: "))
         return stats.uniform(a, b-a)
     if dist == "exponencial":
-        media = float(input("Ingrese la media: "))
+        media = float(input("\nIngrese la media: "))
         return stats.expon(loc=0, scale=media)
     if dist == "poisson":
-        media = float(input("Ingrese la media: "))
+        media = float(input("\nIngrese la media: "))
         return stats.poisson(media)
 
 def test_chi_cuadrado(datos, alpha):
@@ -92,28 +90,25 @@ def test_chi_cuadrado(datos, alpha):
     if n < 30:
         raise ValueError("Se requieren al menos 30 datos para aplicar el test chi-cuadrado.")
     
-    es_discreta = hasattr(dist, "pmf")
-    es_continua = hasattr(dist, "pdf")
+    es_discreta = hasattr(dist, "pmf") # pmf = función de masa de probabilidad
+    es_continua = hasattr(dist, "pdf") # pdf = función de densidad de probabilidad
     
     if es_discreta:
         max_val = max(datos)
         frec_obs = np.bincount(datos, minlength=max_val+1)
-        k_vals = np.arange(len(frec_obs))
+        k_vals = np.arange(len(frec_obs)) # Valores posibles de la variable [0,1,2,...,max_val]
         fe = dist.pmf(k_vals) * n
 
         frec_obs, fe = agrupar_intervalos(frec_obs, fe)
 
     elif es_continua:
         k = int(np.sqrt(n))
-    
-        # Crear los límites de los intervalos
+
         min_val, max_val = min(datos), max(datos)
         limites = np.linspace(min_val, max_val, k + 1)
         
-        # Frecuencia observada
         frec_obs, _ = np.histogram(datos, bins=limites)
-    
-        # Frecuencia esperada usando la CDF de scipy
+
         fe = []
         for i in range(k):
             a, b = limites[i], limites[i + 1]
@@ -121,26 +116,22 @@ def test_chi_cuadrado(datos, alpha):
             fe.append(prob * n)
         fe = np.array(fe)
 
-        # Agrupar intervalos si es necesario
         frec_obs, fe = agrupar_intervalos(frec_obs, fe)
     
     else:
         raise ValueError("Distribución no soportada/no reconocida.")
 
-    # Estadístico chi-cuadrado
     chi2_stat = np.sum((frec_obs - fe) ** 2 / fe)
 
-    # Grados de libertad
     gl = len(frec_obs) - 1
 
-    # Valor crítico y p-value
     valor_critico = stats.chi2.ppf(1 - alpha, gl)
 
-    print(f"H₀ = Los valores generados se ajustan a la distribución {dist.dist.name}")
-    print(f"χ² calculado= {chi2_stat:.4f}")
-    print(f"Grados de libertad = {gl}")
-    print(f"Valor crítico (α = {alpha}): {valor_critico:.4f}")
+    print(f"H₀ = Los valores generados se ajustan a la distribución {dist.dist.name}\n")
+    print(f"χ² calculado= {chi2_stat:.4f}\n")
+    print(f"Grados de libertad = {gl}\n")
+    print(f"Valor crítico (α = {alpha}): {valor_critico:.4f}\n")
     if chi2_stat < valor_critico:
-        print("✔ No se rechaza H₀ (ajuste aceptable).")
+        print("✔ No se rechaza H₀ (ajuste aceptable).\n")
     else:
-        print("✘ Se rechaza H₀ (ajuste no aceptable).")
+        print("✘ Se rechaza H₀ (ajuste no aceptable).\n")
