@@ -91,26 +91,41 @@ def test_chi_cuadrado(datos, alpha):
     
     if n < 30:
         raise ValueError("Se requieren al menos 30 datos para aplicar el test chi-cuadrado.")
+    
+    es_discreta = hasattr(dist, "pmf")
+    es_continua = hasattr(dist, "pdf")
+    
+    if es_discreta:
+        max_val = max(datos)
+        frec_obs = np.bincount(datos, minlength=max_val+1)
+        k_vals = np.arange(len(frec_obs))
+        fe = dist.pmf(k_vals) * n
 
-    k = int(np.sqrt(n))
-    
-    # Crear los límites de los intervalos
-    min_val, max_val = min(datos), max(datos)
-    limites = np.linspace(min_val, max_val, k + 1)
-    
-    # Frecuencia observada
-    frec_obs, _ = np.histogram(datos, bins=limites)
-    
-    # Frecuencia esperada usando la CDF de scipy
-    fe = []
-    for i in range(k):
-        a, b = limites[i], limites[i + 1]
-        prob = dist.cdf(b) - dist.cdf(a)
-        fe.append(prob * n)
-    fe = np.array(fe)
+        frec_obs, fe = agrupar_intervalos(frec_obs, fe)
 
-    # Agrupar intervalos si es necesario
-    frec_obs, fe = agrupar_intervalos(frec_obs, fe)
+    elif es_continua:
+        k = int(np.sqrt(n))
+    
+        # Crear los límites de los intervalos
+        min_val, max_val = min(datos), max(datos)
+        limites = np.linspace(min_val, max_val, k + 1)
+        
+        # Frecuencia observada
+        frec_obs, _ = np.histogram(datos, bins=limites)
+    
+        # Frecuencia esperada usando la CDF de scipy
+        fe = []
+        for i in range(k):
+            a, b = limites[i], limites[i + 1]
+            prob = dist.cdf(b) - dist.cdf(a)
+            fe.append(prob * n)
+        fe = np.array(fe)
+
+        # Agrupar intervalos si es necesario
+        frec_obs, fe = agrupar_intervalos(frec_obs, fe)
+    
+    else:
+        raise ValueError("Distribución no soportada/no reconocida.")
 
     # Estadístico chi-cuadrado
     chi2_stat = np.sum((frec_obs - fe) ** 2 / fe)
